@@ -1,109 +1,72 @@
-#include "OrderBook.hpp"
+#include "Headers.hpp"
 
 OrderBook::OrderBook() {
-    orderBook = std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Order> > >();
 }
 
 OrderBook::~OrderBook() {
-    orderBook.clear();
 }
 
-void OrderBook::addOrder(Order order) {
-    std::string symbol = order.getSymbol();
-    std::string side = order.getSide();
-    std::vector<Order> orders = orderBook[symbol][side];
+void OrderBook::addOrder(const Order& order) {
     orders.push_back(order);
-    orderBook[symbol][side] = orders;
 }
 
-void OrderBook::modifyOrder(Order order) {
-    std::string symbol = order.getSymbol();
-    std::string side = order.getSide();
-    std::vector<Order> orders = orderBook[symbol][side];
+void OrderBook::modifyOrder(int orderId, double newPrice, int newQuantity) {
+    auto it = std::find_if(orders.begin(), orders.end(), [orderId](const Order& order) {
+        return order.id == orderId;
+    });
 
-    for (size_t i = 0; i < orders.size(); i++) {
-        if (orders[i].getPrice() == order.getPrice()) {
-            orders[i] = order;
-            break;
-        }
-    }
-    orderBook[symbol][side] = orders;
-}
-
-void OrderBook::removeOrder(Order order) {
-    std::string symbol = order.getSymbol();
-    std::string side = order.getSide();
-    std::vector<Order> orders = orderBook[symbol][side];
-
-    for (size_t i = 0; i < orders.size(); i++) {
-        if (orders[i].getPrice() == order.getPrice()) {
-            orders.erase(orders.begin() + i);
-            break;
-        }
-    }
-    orderBook[symbol][side] = orders;
-    orderBook[symbol].erase(side);
-    if (orderBook[symbol].empty()) {
-        orderBook.erase(symbol);
-    }
-}
-
-void OrderBook::cancelOrder(Order order) {
-    std::string symbol = order.getSymbol();
-    std::string side = order.getSide();
-    std::vector<Order> orders = orderBook[symbol][side];
-
-    for (size_t i = 0; i < orders.size(); i++) {
-        if (orders[i].getPrice() == order.getPrice()) {
-            orders[i].setQuantity(0);
-            break;
-        }
-    }
-    orderBook[symbol][side] = orders;
-}
-
-void OrderBook::partialFillOrder(Order order) {
-    std::string symbol = order.getSymbol();
-    std::string side = order.getSide();
-    std::vector<Order> orders = orderBook[symbol][side];
-
-    for (size_t i = 0; i < orders.size(); i++) {
-        if (orders[i].getPrice() == order.getPrice()) {
-            orders[i].setQuantity(orders[i].getQuantity() - order.getQuantity());
-            break;
-        }
-    }
-    orderBook[symbol][side] = orders;
-}
-
-void OrderBook::fullFillOrder(Order order) {
-    std::string symbol = order.getSymbol();
-    std::string side = order.getSide();
-    std::vector<Order> orders = orderBook[symbol][side];
-
-    for (size_t i = 0; i < orders.size(); i++) {
-        if (orders[i].getPrice() == order.getPrice()) {
-            orders[i].setQuantity(0);
-            break;
-        }
-    }
-    orderBook[symbol][side] = orders;
-}
-
-void OrderBook::display() {
-    if (orderBook.empty()) {
-        std::cout << "Order Book is empty." << std::endl;
-        return;
+    if (it != orders.end()) {
+        it->price = newPrice;
+        it->quantity = newQuantity;
     } else {
-        std::cout << "Order Book:" << std::endl;
-        for (auto const& symbol : orderBook) {
-            std::cout << "Symbol: " << symbol.first << std::endl;
-            for (auto const& side : symbol.second) {
-                std::cout << "Side: " << side.first << std::endl;
-                for (auto const& order : side.second) {
-                    std::cout << "Price: " << order.getPrice() << std::endl;
-                }
-            }
-        }
+        std::cout << "Order with ID " << orderId << " not found." << std::endl;
+    }
+}
+
+void OrderBook::cancelOrder(int orderId) {
+    orders.erase(std::remove_if(orders.begin(), orders.end(), [orderId](const Order& order) {
+        return order.id == orderId;
+    }), orders.end());
+}
+
+void OrderBook::executeOrder(int orderId) {
+    auto it = std::find_if(orders.begin(), orders.end(), [orderId](const Order& order) {
+        return order.id == orderId;
+    });
+
+    if (it != orders.end()) {
+        std::cout << "Executing order ID " << orderId << " completely." << std::endl;
+        orders.erase(it);
+    } else {
+        std::cout << "Order with ID " << orderId << " not found." << std::endl;
+    }
+}
+
+void OrderBook::executePartialOrder(int orderId, int executedQuantity) {
+    auto it = std::find_if(orders.begin(), orders.end(), [orderId](const Order& order) {
+        return order.id == orderId;
+    });
+
+    if (it == orders.end()) {
+        throw std::runtime_error("Order with ID " + std::to_string(orderId) + " not found.");
+    }
+
+    if (executedQuantity > it->quantity) {
+        throw std::runtime_error("Not enough quantity in order to execute.");
+    }
+
+    if (executedQuantity < it->quantity) {
+        std::cout << "Partially executing order ID " << orderId << " with quantity " << executedQuantity << "." << std::endl;
+        it->quantity -= executedQuantity;
+    } else {
+        std::cout << "Executing order ID " << orderId << " completely." << std::endl;
+        orders.erase(it);
+    }
+}
+
+void OrderBook::printOrderBook() const {
+    std::cout << "Order Book:" << std::endl;
+    for (const auto& order : orders) {
+        std::cout << "ID: " << order.id << ", Side: " << order.side << ", Price: " << order.price << ", Quantity: " << order.quantity << std::endl;
     }
 }

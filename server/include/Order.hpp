@@ -1,18 +1,14 @@
 #pragma once
 
-#include <string>
+#include "Headers.hpp"
 
 class Order {
     public:
-        Order(std::string symbol, std::string side, double price);
-        ~Order();
-
-        std::string getSymbol() const;
-        std::string getSide() const;
-        double getPrice() const;
-
-    private:
-        std::string symbol;
-        std::string side;
+        int id;
+        char side;  // 'B' for Bid, 'S' for Sell
         double price;
+        int quantity;
+
+        Order(int orderId, char orderSide, double orderPrice, int orderQuantity)
+            : id(orderId), side(orderSide), price(orderPrice), quantity(orderQuantity) {}
 };

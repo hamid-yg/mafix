@@ -24,6 +24,10 @@ This project aims to provide a realistic simulation of market dynamics, allowing
 - Connects to the server using Logon/Logout messages.
 - Sends various types of orders (create, modify, cancel, trade) to the financial market.
 
+## Architecture
+
+![./architecture.png](./architecture.png)
+
 ## Installation
 
 To install MAFIX, clone the repository and compile the source code:

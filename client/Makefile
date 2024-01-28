@@ -1,4 +1,4 @@
-# makefile for server
+# makefile for client
 
 CC = g++
 
@@ -10,7 +10,7 @@ SRC = $(wildcard ./src/*.cpp ./src/*/*.cpp)
 
 OBJ = $(SRC:.cpp=.o)
 
-BIN = _server
+BIN = _client
 
 TEST_SRC = $(wildcard ./tests/*.cpp)
 

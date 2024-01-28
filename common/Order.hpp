@@ -5,7 +5,7 @@
 class Order {
     public:
         int id;
-        char side;  // 'B' for Bid, 'S' for Sell
+        char side;
         double price;
         int quantity;
 

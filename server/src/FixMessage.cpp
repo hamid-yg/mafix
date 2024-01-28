@@ -2,8 +2,8 @@
 
 
 FixMessage::FixMessage(const std::string& messageType) : messageType(messageType) {
-    setField(8, "FIX.4.2");  // BeginString
-    setField(35, messageType); // MsgType
+    setField(8, "FIX.4.2");
+    setField(35, messageType);
 }
 
 std::string FixMessage::serialize() const {
@@ -17,15 +17,15 @@ std::string FixMessage::serialize() const {
     return oss.str();
 }
 
-    void FixMessage::deserialize(const std::string& message) {
-        std::istringstream iss(message);
-        std::string field;
-        while (std::getline(iss, field, '\x01')) {
-            size_t pos = field.find('=');
-            if (pos != std::string::npos) {
-                int tag = std::stoi(field.substr(0, pos));
-                std::string value = field.substr(pos + 1);
-                setField(tag, value);
-            }
+void FixMessage::deserialize(const std::string& message) {
+    std::istringstream iss(message);
+    std::string field;
+    while (std::getline(iss, field, '\x01')) {
+        size_t pos = field.find('=');
+        if (pos != std::string::npos) {
+            int tag = std::stoi(field.substr(0, pos));
+            std::string value = field.substr(pos + 1);
+            setField(tag, value);
         }
     }
+}

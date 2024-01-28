@@ -1,7 +1,7 @@
 #include "Headers.hpp"
 
 int main() {
-    FixServer fixServer;
-    fixServer.run();
+    TradingClient client;
+    client.run();
     return 0;
 }

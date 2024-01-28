@@ -18,6 +18,11 @@ class FixMessage
         std::string serialize() const;
         void deserialize(const std::string& message);
 
+        std::string getField(int tag) const {
+            auto it = fields.find(tag);
+            return it != fields.end() ? it->second : "";
+        }
+
     private:
         std::unordered_map<int, std::string> fields;
 
@@ -31,10 +36,5 @@ class FixMessage
             fields[tag] = value;
             headerFields[tag] = value;
             trailerFields[tag] = value;
-        }
-
-        std::string getField(int tag) const {
-            auto it = fields.find(tag);
-            return it != fields.end() ? it->second : "";
         }
 };

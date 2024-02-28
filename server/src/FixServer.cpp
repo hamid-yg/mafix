@@ -19,6 +19,7 @@ void FixServer::run() {
 
 void FixServer::initSocket() {
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+
     if (serverSocket == -1) {
         perror("<Log>: Error creating socket");
         exit(EXIT_FAILURE);
@@ -40,6 +41,22 @@ void FixServer::initSocket() {
     }
 
     std::cout << "<Log>: FIX server is listening on port " << LISTEN_PORT << std::endl;
+
+    std::vector<std::thread> clientThreads;
+
+    while (true) {
+        int clientSocket = acceptConnection();
+        if (clientSocket == -1) {
+            std::cerr << "<Error>: Failed to accept client connection" << std::endl;
+            close(serverSocket);
+            exit(EXIT_FAILURE);
+        }
+
+        std::thread clientThread(&FixServer::handleClient, this, clientSocket);
+        clientThread.detach();
+    }
+
+    close(serverSocket);
 }
 
 int FixServer::acceptConnection() {

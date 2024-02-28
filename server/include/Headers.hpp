@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/event.h>
+#include <thread>
 
 #include "../../common/Headers.hpp"
 #include "FixServer.hpp"

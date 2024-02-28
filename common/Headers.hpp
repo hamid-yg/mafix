@@ -5,6 +5,6 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-#include "../../common/Headers.hpp"
-
-#include "TradingClient.hpp"
+#include "Order.hpp"
+#include "OrderBook.hpp"
+#include "Market.hpp"

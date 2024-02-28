@@ -1,21 +1,11 @@
 #include "Headers.hpp"
 
-TradingClient::TradingClient() {
+TradingClient::TradingClient() : orderId(1) {
     initSocket();
 }
 
 TradingClient::~TradingClient() {
     close(clientSocket);
-}
-
-void TradingClient::run() {
-    std::string message;
-
-    while (true) {
-        std::cout << "Enter FIX message: ";
-        std::getline(std::cin, message);
-        sendMessage(message);
-    }
 }
 
 void TradingClient::initSocket() {
@@ -28,7 +18,7 @@ void TradingClient::initSocket() {
     struct sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
-    serverAddress.sin_port = htons(9876);
+    serverAddress.sin_port = htons(8000);
 
     if (connect(clientSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1) {
         std::cerr << "Error: Could not connect to server." << std::endl;
@@ -38,19 +28,21 @@ void TradingClient::initSocket() {
     std::cout << "Connected to server." << std::endl;
 }
 
-void TradingClient::sendMessage(const std::string& message) {
-    write(clientSocket, message.c_str(), message.size());
-    std::cout << "Sent FIX message: " << message << std::endl;
+void TradingClient::run() {
+    std::cout << "Usage: Price Quantity Symbol (B or S)" << std::endl;
+    std::cout << "Enter 'exit' to close the connection." << std::endl;
+
+    while (true) {
+        std::string response;
+        std::cout << "<client> ";
+        std::getline(std::cin, response);
+
+        if (response == "exit") {
+            write(clientSocket, response.c_str(), response.size());
+            break;
+        }
+        response = std::to_string(orderId) + " " + response;
+        orderId++;
+        write(clientSocket, response.c_str(), response.size());
+    }
 }
-
-// std::string TradingClient::createNewOrderMessage(const std::string& symbol, double price, int quantity) {
-//     return "8=FIX.4.2|35=D|55=" + symbol + "|44=" + std::to_string(price) + "|38=" + std::to_string(quantity);
-// }
-
-// std::string TradingClient::createCancelOrderMessage(const std::string& orderId) {
-//     return "8=FIX.4.2|35=F|41=" + orderId;
-// }
-
-// std::string TradingClient::createModifyOrderMessage(const std::string& orderId, double newPrice, int newQuantity) {
-//     return "8=FIX.4.2|35=G|41=" + orderId + "|44=" + std::to_string(newPrice) + "|38=" + std::to_string(newQuantity);
-// }

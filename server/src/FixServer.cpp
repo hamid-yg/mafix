@@ -20,7 +20,7 @@ void FixServer::run() {
 void FixServer::initSocket() {
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1) {
-        perror("Error creating socket");
+        perror("<Log>: Error creating socket");
         exit(EXIT_FAILURE);
     }
 
@@ -30,16 +30,16 @@ void FixServer::initSocket() {
     serverAddress.sin_port = htons(LISTEN_PORT);
 
     if (bind(serverSocket, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)) == -1) {
-        perror("Error binding socket");
+        perror("<Log>: Error binding socket");
         exit(EXIT_FAILURE);
     }
 
     if (listen(serverSocket, 10) == -1) {
-        perror("Error listening on socket");
+        perror("<Log>: Error listening on socket");
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "FIX server is listening on port " << LISTEN_PORT << std::endl;
+    std::cout << "<Log>: FIX server is listening on port " << LISTEN_PORT << std::endl;
 }
 
 int FixServer::acceptConnection() {
@@ -48,11 +48,11 @@ int FixServer::acceptConnection() {
     int clientSocket = accept(serverSocket, reinterpret_cast<sockaddr*>(&clientAddress), &clientAddressLength);
 
     if (clientSocket == -1) {
-        perror("Error accepting connection");
+        perror("<Log>: Error accepting connection");
         return -1;
     }
 
-    std::cout << "Accepted connection from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << std::endl;
+    std::cout << "<Log>: Accepted connection from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << std::endl;
     return clientSocket;
 }
 
@@ -61,39 +61,31 @@ void FixServer::handleClient(int clientSocket) {
     ssize_t bytesRead;
 
     while ((bytesRead = read(clientSocket, buffer, sizeof(buffer))) > 0) {
-        std::string fixMessage(buffer, bytesRead);
-
-        FixMessage receivedFixMessage("UnknownMessageType");
-
-        receivedFixMessage.deserialize(fixMessage);
-
-        std::string msgType = receivedFixMessage.getField(35);
-
-        processFixMessage(receivedFixMessage.serialize(), msgType, clientSocket);
+        std::string receivedMessage(buffer, bytesRead);
+        processMessage(receivedMessage, clientSocket);
     }
 
-    std::cout << "Connection closed with client" << std::endl;
+    std::cout << "<Log>: Connection closed with client" << std::endl;
     close(clientSocket);
 }
 
-void FixServer::processFixMessage(const std::string& fixMessage, const std::string& messageType, int clientSocket) {
-    FixMessage receivedFixMessage(messageType);
-    receivedFixMessage.deserialize(fixMessage);
+void FixServer::processMessage(const std::string& receivedMessage, int clientSocket) {
+    std::istringstream iss(receivedMessage);
+    std::vector<std::string> words;
+    std::string word;
 
-    std::string msgType = receivedFixMessage.getField(35);
-
-    if (msgType == "A") {
-        std::cout << "Received Logon message" << std::endl;
-    } else if (msgType == "5") {
-        std::cout << "Received Logout message" << std::endl;
-    } else if (msgType == "D") {
-        std::cout << "Received New Order - Single message" << std::endl;
-    } else if (msgType == "F") {
-        std::cout << "Received Order - Cancel/Replace Request message" << std::endl;
-    } else if (msgType == "8") {
-        std::cout << "Received Execution Report message" << std::endl;
-    } else {
-        std::cerr << "Unknown MsgType received: " << msgType << std::endl;
+    while (std::getline(iss, word, ' ')) {
+        words.push_back(word);
     }
-    write(clientSocket, fixMessage.c_str(), fixMessage.size());
+    char side = words[3][0];
+
+    if (side == 'B') {
+        market.receiveOrder(Order(atoi(words[0].c_str()), side, atoi(words[1].c_str()), atoi(words[2].c_str())));
+        std::cout << "<Log>: Order received and added to the order book." << std::endl;
+        write(clientSocket, "Order placed successfully.", 26);
+    } else if (side == 'S') {
+        market.receiveOrder(Order(atoi(words[0].c_str()), side, atoi(words[1].c_str()), atoi(words[2].c_str())));
+        std::cout << "<Log>: Order received and added to the order book." << std::endl;
+        write(clientSocket, "Order placed successfully.", 26);
+    }
 }

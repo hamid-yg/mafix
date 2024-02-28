@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Headers.hpp"
+// #include "Headers.hpp"
+#include "Order.hpp"
 
 class OrderBook {
     private:
@@ -23,7 +24,7 @@ class OrderBook {
                 it->price = newPrice;
                 it->quantity = newQuantity;
             } else {
-                std::cout << "Order with ID " << orderId << " not found." << std::endl;
+                std::cout << "<Log>: Order with ID " << orderId << " not found." << std::endl;
             }
         }
 
@@ -39,10 +40,10 @@ class OrderBook {
             });
 
             if (it != orders.end()) {
-                std::cout << "Executing order ID " << orderId << " completely." << std::endl;
+                std::cout << "<Log>: Executing order ID " << orderId << " completely." << std::endl;
                 orders.erase(it);
             } else {
-                std::cout << "Order with ID " << orderId << " not found." << std::endl;
+                std::cout << "<Log>: Order with ID " << orderId << " not found." << std::endl;
             }
         };
 
@@ -52,18 +53,18 @@ class OrderBook {
             });
 
             if (it == orders.end()) {
-                throw std::runtime_error("Order with ID " + std::to_string(orderId) + " not found.");
+                throw std::runtime_error("<Log>: Order with ID " + std::to_string(orderId) + " not found.");
             }
 
             if (executedQuantity > it->quantity) {
-                throw std::runtime_error("Not enough quantity in order to execute.");
+                throw std::runtime_error("<Log>: Not enough quantity in order to execute.");
             }
 
             if (executedQuantity < it->quantity) {
-                std::cout << "Partially executing order ID " << orderId << " with quantity " << executedQuantity << "." << std::endl;
+                std::cout << "<Log>: Partially executing order ID " << orderId << " with quantity " << executedQuantity << "." << std::endl;
                 it->quantity -= executedQuantity;
             } else {
-                std::cout << "Executing order ID " << orderId << " completely." << std::endl;
+                std::cout << "<Log>: Executing order ID " << orderId << " completely." << std::endl;
                 orders.erase(it);
             }
         };

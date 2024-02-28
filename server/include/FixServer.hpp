@@ -15,9 +15,10 @@ class FixServer {
 
     private:
         int serverSocket;
+        Market market;
 
         void initSocket();
         int acceptConnection();
         void handleClient(int clientSocket);
-        void processFixMessage(const std::string& fixMessage, const std::string &messageType, int clientSocket);
+        void processMessage(const std::string& fixMessage, int clientSocket);
 };

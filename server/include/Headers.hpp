@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <cstring>
 #include <map>
 #include <unordered_map>
 #include <vector>
@@ -13,8 +14,7 @@
 #include <unistd.h>
 #include <sys/event.h>
 
-#include "../../common/Order.hpp"
-#include "../../common/OrderBook.hpp"
+#include "../../common/Headers.hpp"
 #include "FixServer.hpp"
 
 #include "Protocols/FixMessage.hpp"

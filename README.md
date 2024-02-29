@@ -48,8 +48,3 @@ To run a simulation, use the following command:
 
 ./_client #in the second terminal
 ```
-
-## Possible problems
-
-- The communication is established but the server does not yet correctly manage the messages
-- Check the path of the libraries used present in the makefiles

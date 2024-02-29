@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 #include <algorithm>
+#include <numeric>
 #include <iostream>
 #include <sstream>
 #include <sys/socket.h>
@@ -16,17 +17,16 @@
 #include <thread>
 
 #include "../../common/Headers.hpp"
+#include "../../common/Protocols/FixMessage.hpp"
+#include "../../common/Protocols/Logon.hpp"
+#include "../../common/Protocols/ExecutionReport.hpp"
+#include "../../common/Protocols/OrderCancelRequest.hpp"
+#include "../../common/Protocols/OrderCancelReplaceRequest.hpp"
+#include "../../common/Protocols/MarketDataIncrementalRefresh.hpp"
+#include "../../common/Protocols/MarketDataSnapshotFullRefresh.hpp"
+#include "../../common/Protocols/NewOrder.hpp"
+
 #include "FixServer.hpp"
-
-#include "Protocols/FixMessage.hpp"
-#include "Protocols/Logon.hpp"
-#include "Protocols/ExecutionReport.hpp"
-#include "Protocols/OrderCancelRequest.hpp"
-#include "Protocols/OrderCancelReplaceRequest.hpp"
-#include "Protocols/MarketDataIncrementalRefresh.hpp"
-#include "Protocols/MarketDataSnapshotFullRefresh.hpp"
-#include "Protocols/NewOrder.hpp"
-
 #include "Networks/Socket.hpp"
 #include "Networks/UDPSocket.hpp"
 #include "Networks/TCPSocket.hpp"

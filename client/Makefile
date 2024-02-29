@@ -4,9 +4,9 @@ CC = g++
 
 CFLAGS = -Wall -Wextra -Werror -pedantic -std=c++11
 
-INC = -I./include
+INC = -I./include -I../common -I../common/Protocols
 
-SRC = $(wildcard ./src/*.cpp ./src/*/*.cpp)
+SRC = $(wildcard ./src/*.cpp ./src/*/*.cpp ../common/*.cpp ../common/Protocols/*.cpp)
 
 OBJ = $(SRC:.cpp=.o)
 

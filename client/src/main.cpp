@@ -1,7 +1,12 @@
 #include "Headers.hpp"
 
 int main() {
-    TradingClient client;
-    client.run();
+    try {
+        TradingClient client;
+        client.run();
+    }
+    catch(const std::exception& e) {
+        std::cerr << "<Error>: " << e.what() << "\n";
+    }
     return 0;
 }

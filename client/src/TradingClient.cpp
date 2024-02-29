@@ -1,4 +1,4 @@
-#include "Headers.hpp"
+#include "../include/Headers.hpp"
 
 TradingClient::TradingClient() : orderId(1) {
     initSocket();
@@ -29,20 +29,59 @@ void TradingClient::initSocket() {
 }
 
 void TradingClient::run() {
-    std::cout << "Usage: Price Quantity Symbol (B or S)" << std::endl;
+    std::cout << "Usage: Symbol Side(B|S) Price Quantity" << std::endl;
     std::cout << "Enter 'exit' to close the connection." << std::endl;
 
     while (true) {
         std::string response;
-        std::cout << "<client> ";
-        std::getline(std::cin, response);
+        std::vector<std::string> tokens;
 
-        if (response == "exit") {
+        std::cout << "<client> ";
+
+        std::getline(std::cin, response);
+        std::istringstream iss(response);
+
+        for (std::string s; iss >> s;) {
+            tokens.push_back(s);
+        }
+
+        if (tokens[0] == "logon") {
+            Logon logon(tokens[1], tokens[2], tokens[3], tokens[4]);
+            std::string logonMsg = logon.serialize();
+            std::cout << "Message: " << logonMsg << std::endl;
+            write(clientSocket, logonMsg.c_str(), logonMsg.size());
+        } else if (tokens[0] == "add") {
+            NewOrder newOrder(orderId, tokens[1], tokens[2], tokens[3], tokens[4]);
+            orderId++;
+            std::string orderMsg = newOrder.serialize();
+            write(clientSocket, orderMsg.c_str(), orderMsg.size());
+        } else if (tokens[0] == "modify") {
+            // OrderCancelReplaceRequest modifyOrder;
+            // modifyOrder.setField(11, std::to_string(orderId));
+            // modifyOrder.setField(41, std::to_string(orderId));
+            // modifyOrder.setField(55, "MSFT");
+            // modifyOrder.setField(54, "1");
+            // modifyOrder.setField(38, "100");
+            // modifyOrder.setField(44, "50.00");
+            // std::string modifyMsg = modifyOrder.serialize();
+            // write(clientSocket, modifyMsg.c_str(), modifyMsg.size());
+        } else if (tokens[0] == "report") {
+            // ExecutionReport report(std::to_string(orderId), "MSFT", "2", "2");
+            // std::string reportMsg = report.serialize();
+            // write(clientSocket, reportMsg.c_str(), reportMsg.size());
+        } else if (tokens[0] == "cancel") {
+            // OrderCancelRequest cancelOrder;
+            // cancelOrder.setField(11, std::to_string(orderId));
+            // cancelOrder.setField(41, std::to_string(orderId));
+            // cancelOrder.setField(55, "MSFT");
+            // std::string cancelMsg = cancelOrder.serialize();
+            // write(clientSocket, cancelMsg.c_str(), cancelMsg.size());
+        } else if (response == "exit") {
             write(clientSocket, response.c_str(), response.size());
             break;
+        } else {
+            std::cerr << "Error: Invalid action." << std::endl;
+            return;
         }
-        response = std::to_string(orderId) + " " + response;
-        orderId++;
-        write(clientSocket, response.c_str(), response.size());
     }
 }

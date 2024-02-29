@@ -2,6 +2,7 @@
 
 FixServer::FixServer() {
     initSocket();
+    initMarket();
 }
 
 FixServer::~FixServer() {
@@ -31,12 +32,12 @@ void FixServer::initSocket() {
     serverAddress.sin_port = htons(LISTEN_PORT);
 
     if (bind(serverSocket, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)) == -1) {
-        perror("<Log>: Error binding socket");
+        perror("<Error>: Error binding socket");
         exit(EXIT_FAILURE);
     }
 
     if (listen(serverSocket, 10) == -1) {
-        perror("<Log>: Error listening on socket");
+        perror("<Error>: Error listening on socket");
         exit(EXIT_FAILURE);
     }
 
@@ -59,13 +60,34 @@ void FixServer::initSocket() {
     close(serverSocket);
 }
 
+void FixServer::initMarket() {
+    marketSocket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (marketSocket == -1) {
+        perror("<Error>: Failed to create market socket");
+        exit(EXIT_FAILURE);
+    }
+
+    sockaddr_in serverAddress;
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
+    serverAddress.sin_port = htons(MARKET_PORT);
+
+    if (bind(marketSocket, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)) == -1) {
+        perror("<Error>: Failed to bind market socket");
+        close(marketSocket);
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout << "<Log>: Market server is listening on market port " << MARKET_PORT << std::endl;
+}
+
 int FixServer::acceptConnection() {
     sockaddr_in clientAddress;
     socklen_t clientAddressLength = sizeof(clientAddress);
     int clientSocket = accept(serverSocket, reinterpret_cast<sockaddr*>(&clientAddress), &clientAddressLength);
 
     if (clientSocket == -1) {
-        perror("<Log>: Error accepting connection");
+        perror("<Error>: Failed to accept client connection");
         return -1;
     }
 
@@ -88,21 +110,47 @@ void FixServer::handleClient(int clientSocket) {
 
 void FixServer::processMessage(const std::string& receivedMessage, int clientSocket) {
     std::istringstream iss(receivedMessage);
-    std::vector<std::string> words;
-    std::string word;
+    std::string fixMessage;
 
-    while (std::getline(iss, word, ' ')) {
-        words.push_back(word);
-    }
-    char side = words[3][0];
+    while (std::getline(iss, fixMessage)) {
+        if (fixMessage.empty()) {
+            continue;
+        }
 
-    if (side == 'B') {
-        market.receiveOrder(Order(atoi(words[0].c_str()), side, atoi(words[1].c_str()), atoi(words[2].c_str())));
-        std::cout << "<Log>: Order received and added to the order book." << std::endl;
-        write(clientSocket, "Order placed successfully.", 26);
-    } else if (side == 'S') {
-        market.receiveOrder(Order(atoi(words[0].c_str()), side, atoi(words[1].c_str()), atoi(words[2].c_str())));
-        std::cout << "<Log>: Order received and added to the order book." << std::endl;
-        write(clientSocket, "Order placed successfully.", 26);
+        std::cout << "<Log>: Received FIX message: " << fixMessage << std::endl;
+
+        FixMessage message("");
+        std:: string msgType;
+
+        message.deserialize(fixMessage);
+        msgType = message.getField(35);
+
+        std::cout << "<Log>: Message type: " << msgType << std::endl;
+
+        if (msgType == "A") {
+            write(clientSocket, "<Log>: Login successful.", 26);
+        } else if (msgType == "F" || msgType == "D") {
+            std::string symbol = message.getField(55);
+            char side = message.getField(54)[0];
+            int quantity = std::stoi(message.getField(38));
+            double price = std::stoi(message.getField(44));
+            market.receiveOrder(Order(atoi(message.getField(11).c_str()), side, symbol, quantity, price));
+            std::cout << "<Log>: Order received and added to the order book." << std::endl;
+        } else if (msgType == "U") {
+            std::string symbol = message.getField(55);
+            int quantity = std::stoi(message.getField(38));
+            double price = std::stoi(message.getField(44));
+            market.modifyOrder(atoi(message.getField(11).c_str()), symbol, price, quantity);
+            std::cout << "<Log>: Order modified." << std::endl;
+        } else if (msgType == "X") {
+            market.cancelOrder(atoi(message.getField(11).c_str()), message.getField(55));
+            std::cout << "<Log>: Order cancelled." << std::endl;
+        } else if (msgType == "H") {
+            std::string symbol = message.getField(55);
+            std::string orderBook = market.getOrderBook(symbol);
+            write(clientSocket, orderBook.c_str(), orderBook.length());
+        } else {
+            write(clientSocket, "<Error>: Invalid message type.", 27);
+        }
     }
 }
